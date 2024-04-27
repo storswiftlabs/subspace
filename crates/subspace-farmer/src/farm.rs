@@ -22,6 +22,14 @@ use ulid::Ulid;
 pub type FarmError = Box<dyn std::error::Error + Send + Sync + 'static>;
 pub type HandlerFn<A> = Arc<dyn Fn(&A) + Send + Sync + 'static>;
 
+/// Getter for plotted sectors
+#[async_trait]
+pub trait PlottedSectors {
+    async fn get(
+        &self,
+    ) -> Result<Box<dyn Stream<Item = Result<PlottedSector, FarmError>> + Unpin + '_>, FarmError>;
+}
+
 /// Offset wrapper for pieces in [`PieceCache`]
 #[derive(Debug, Display, Copy, Clone, Encode, Decode)]
 #[repr(transparent)]
@@ -362,10 +370,8 @@ pub trait Farm {
     /// Number of sectors successfully plotted so far
     async fn plotted_sectors_count(&self) -> Result<SectorIndex, FarmError>;
 
-    /// Read information about sectors plotted so far
-    async fn plotted_sectors(
-        &self,
-    ) -> Result<Box<dyn Stream<Item = Result<PlottedSector, FarmError>> + Unpin + '_>, FarmError>;
+    /// Get plotted sectors instance
+    fn plotted_sectors(&self) -> Arc<dyn PlottedSectors + 'static>;
 
     /// Get piece cache instance
     fn piece_cache(&self) -> Arc<dyn PieceCache + 'static>;
